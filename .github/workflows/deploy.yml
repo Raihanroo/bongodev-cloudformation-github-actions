@@ -34,17 +34,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Debug AssumeRole test (temporary)
-        env:
-          ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
-        run: |
-          TOKEN=$(curl -sH "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
-          PAYLOAD=$(echo "$TOKEN" | cut -d. -f2 | tr '_-' '/+')
-          case $((${#PAYLOAD} % 4)) in 2) PAYLOAD="$PAYLOAD==";; 3) PAYLOAD="$PAYLOAD=";; esac
-          echo "$PAYLOAD" | base64 -d | jq '{iss, aud, sub, iat, exp}'
-          echo "--- AssumeRoleWithWebIdentity test ---"
-          aws sts assume-role-with-web-identity --no-sign-request --region "$AWS_REGION" --role-arn "$ROLE_ARN" --role-session-name debug-test --web-identity-token "$TOKEN" --query 'Credentials.Expiration' --output text 2>&1 || true
-
       - name: Configure temporary AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
